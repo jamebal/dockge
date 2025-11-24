@@ -69,7 +69,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: docker/Dockerfile
           platforms: ${{ inputs.platforms || 'linux/amd64,linux/arm64,linux/arm/v7' }}
           push: true
           tags: ${{ steps.tags.outputs.tags }}
@@ -82,7 +82,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: docker/Dockerfile
           platforms: ${{ inputs.platforms || 'linux/amd64,linux/arm64,linux/arm/v7' }}
           push: true
           tags: jmal/dockge:nightly

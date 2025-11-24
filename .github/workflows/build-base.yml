@@ -32,7 +32,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Base.Dockerfile
+          file: docker/Base.Dockerfile
           platforms: ${{ inputs.platforms || 'linux/amd64,linux/arm64,linux/arm/v7' }}
           push: true
           tags: jmal/dockge:base
