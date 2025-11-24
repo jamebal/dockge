@@ -124,6 +124,7 @@
     "Downed": "Caído",
     "Switch to sh": "Cambiar a sh",
     "terminal": "Terminal",
+    "fullscreen": "Pantalla completa",
     "CurrentHostname": "(Vacío: Seguir hostname actual)",
     "New Container Name...": "Nombre del nuevo Container...",
     "Network name...": "Nombre de la red...",
