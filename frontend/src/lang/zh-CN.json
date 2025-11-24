@@ -123,6 +123,7 @@
     "Restarted": "已重启",
     "Switch to sh": "切换至sh",
     "terminal": "终端",
+    "fullscreen": "全屏",
     "CurrentHostname": "未设置:沿用当前主机名",
     "New Container Name...": "新的容器名称...",
     "Network name...": "网络名称...",

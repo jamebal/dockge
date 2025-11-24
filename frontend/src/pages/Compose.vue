@@ -150,7 +150,13 @@
 
                     <!-- Combined Terminal Output -->
                     <div v-show="!isEditMode">
-                        <h4 class="mb-3">{{ $t("terminal") }}</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 class="mb-3">{{ $t("terminal") }}</h4>
+                            <button v-if="!isEditMode && active" class="btn btn-normal" :disabled="processing" @click="fullscreen">
+                                <font-awesome-icon icon="expand" class="me-1" />
+                                {{ $t("fullscreen") }}
+                            </button>
+                        </div>
                         <Terminal
                             ref="combinedTerminal"
                             class="mb-3 terminal"
@@ -232,6 +238,30 @@
             <BModal v-model="showDeleteDialog" :cancelTitle="$t('cancel')" :okTitle="$t('deleteStack')" okVariant="danger" @ok="deleteDialog">
                 {{ $t("deleteStackMsg") }}
             </BModal>
+
+            <!-- Fullscreen Terminal Modal -->
+            <BModal
+                v-model="showFullscreenTerminal"
+                :title="$t('terminal') + ' - ' + stack.name"
+                size="xl"
+                modal-class="fullscreen-terminal-modal"
+                body-class="fullscreen-terminal-body"
+                header-class="fullscreen-terminal-header"
+                :hide-footer="true"
+                @shown="onFullscreenTerminalShown"
+                @hidden="onFullscreenTerminalHidden"
+            >
+                <div class="fullscreen-terminal-container">
+                    <Terminal
+                        ref="fullscreenTerminal"
+                        class="fullscreen-terminal"
+                        :name="combinedTerminalName"
+                        :endpoint="endpoint"
+                        :rows="fullscreenTerminalRows"
+                        :cols="fullscreenTerminalCols"
+                    ></Terminal>
+                </div>
+            </BModal>
         </div>
     </transition>
 </template>
@@ -311,6 +341,9 @@ export default {
             showDeleteDialog: false,
             newContainerName: "",
             stopServiceStatusTimeout: false,
+            showFullscreenTerminal: false,
+            fullscreenTerminalRows: 40,
+            fullscreenTerminalCols: 150,
         };
     },
     computed: {
@@ -478,9 +511,11 @@ export default {
         }
 
         this.requestServiceStatus();
+        this.calculateFullscreenTerminalSize();
+        window.addEventListener("resize", this.calculateFullscreenTerminalSize);
     },
     unmounted() {
-
+        window.removeEventListener("resize", this.calculateFullscreenTerminalSize);
     },
     methods: {
         startServiceStatusTimeout() {
@@ -791,6 +826,34 @@ export default {
             this.stack.name = this.stack?.name?.toLowerCase();
         },
 
+        fullscreen() {
+            this.showFullscreenTerminal = true;
+            this.calculateFullscreenTerminalSize();
+            this.$refs.fullscreenTerminal?.bind(this.endpoint, this.combinedTerminalName);
+        },
+
+        onFullscreenTerminalShown() {
+            this.calculateFullscreenTerminalSize();
+            requestAnimationFrame(() => {
+                this.$refs.fullscreenTerminal?.terminal.resize(this.fullscreenTerminalCols, this.fullscreenTerminalRows);
+            });
+        },
+
+        calculateFullscreenTerminalSize() {
+            const charWidth = 8.4;
+            const charHeight = 17;
+
+            const availableWidth = window.innerWidth - 100;
+            const availableHeight = window.innerHeight - 160;
+
+            this.fullscreenTerminalCols = Math.floor(availableWidth / charWidth);
+            this.fullscreenTerminalRows = Math.floor(availableHeight / charHeight);
+        },
+
+        onFullscreenTerminalHidden() {
+            this.showFullscreenTerminal = false;
+        },
+
     }
 };
 </script>
@@ -813,5 +876,43 @@ export default {
 .agent-name {
     font-size: 13px;
     color: $dark-font-color3;
+}
+</style>
+<style lang="scss">
+// Fullscreen terminal modal styles
+.fullscreen-terminal-modal {
+    .modal-dialog {
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .modal-content {
+        height: 100%;
+    }
+
+    .fullscreen-terminal-header {
+        background-color: #2c2f38;
+        color: #fff;
+        border-bottom: 1px solid #444;
+    }
+
+    .fullscreen-terminal-body {
+        background-color: #1e1e1e;
+        padding: 0;
+        overflow: hidden;
+    }
+}
+
+.fullscreen-terminal-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.fullscreen-terminal {
+    flex: 1;
+    height: 100% !important;
+    width: 100%;
 }
 </style>

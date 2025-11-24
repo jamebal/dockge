@@ -123,6 +123,7 @@
     "Restarted": "重新啟動",
     "Downed": "斷線",
     "terminal": "終端",
+    "fullscreen": "全螢幕",
     "CurrentHostname": "（取消設定：依據目前主機名稱）",
     "New Container Name...": "新容器名稱...",
     "Network name...": "網路名稱...",
