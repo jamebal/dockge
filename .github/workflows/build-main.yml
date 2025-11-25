@@ -24,12 +24,33 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   build-main:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check Typescript
+        run: npm run check-ts
+
+      - name: Build
+        run: npm run build:frontend
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -45,21 +66,25 @@ jobs:
 
       - name: Generate tags
         id: tags
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          CUSTOM_TAG: ${{ inputs.tag }}
+          GIT_SHA: ${{ github.sha }}
         run: |
-          TAGS="${{ secrets.DOCKER_USERNAME }}/dockge:latest"
+          TAGS="${DOCKER_USERNAME}/dockge:latest"
 
           # Add custom tag if provided
-          if [ -n "${{ inputs.tag }}" ]; then
-            TAGS="${TAGS},${{ secrets.DOCKER_USERNAME }}/dockge:${{ inputs.tag }}"
+          if [ -n "${CUSTOM_TAG}" ]; then
+            TAGS="${TAGS},${DOCKER_USERNAME}/dockge:${CUSTOM_TAG}"
           fi
 
           # Add git sha tag
-          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-          TAGS="${TAGS},${{ secrets.DOCKER_USERNAME }}/dockge:${SHORT_SHA}"
+          SHORT_SHA=$(echo "${GIT_SHA}" | cut -c1-7)
+          TAGS="${TAGS},${DOCKER_USERNAME}/dockge:${SHORT_SHA}"
 
           # Add date tag
           DATE_TAG=$(date -u +%Y%m%d)
-          TAGS="${TAGS},${{ secrets.DOCKER_USERNAME }}/dockge:${DATE_TAG}"
+          TAGS="${TAGS},${DOCKER_USERNAME}/dockge:${DATE_TAG}"
 
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
           echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT

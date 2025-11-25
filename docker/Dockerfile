@@ -6,7 +6,7 @@ FROM jmal/dockge:build-healthcheck AS build_healthcheck
 ############################################
 # Build
 ############################################
-FROM louislam/dockge:base AS build
+FROM jmal/dockge:base AS build
 WORKDIR /app
 COPY --chown=node:node  ./package.json ./package.json
 COPY --chown=node:node  ./package-lock.json ./package-lock.json
