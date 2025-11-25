@@ -79,7 +79,6 @@ export class StatsRunner {
             this.process = childProcess.spawn("docker", [
                 "compose",
                 "stats",
-                "--no-trunc",
                 "--format",
                 "json"
             ], {
@@ -192,7 +191,7 @@ export class StatsRunner {
      */
     protected parseStats(raw: DockerStatsRaw): ContainerStats {
         return {
-            id: raw.Container || "",
+            id: raw.ID || "",
             name: raw.Name || raw.Container || "",
             service: this.extractServiceName(raw.Name || ""),
             cpuPercent: raw.CPUPerc || "0.00%",
