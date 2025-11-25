@@ -72,7 +72,7 @@ jobs:
           file: docker/Dockerfile
           platforms: ${{ inputs.platforms || 'linux/amd64,linux/arm64,linux/arm/v7' }}
           push: true
-          tags: ${{ steps.tags.outputs.tags }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/dockge:latest
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/dockge:latest
           cache-to: type=inline
           target: release
