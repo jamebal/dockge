@@ -156,6 +156,7 @@ export class TerminalSocketHandler extends AgentSocketHandler {
 
                 const stack = await Stack.getStack(server, stackName);
                 await stack.leaveCombinedTerminal(socket);
+                await stack.leaveComposeStats(socket);
 
                 callbackResult({
                     ok: true,

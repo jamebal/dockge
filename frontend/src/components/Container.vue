@@ -7,7 +7,7 @@
                     <span class="me-1">{{ imageName }}:</span><span class="tag">{{ imageTag }}</span>
                 </div>
                 <div v-if="!isEditMode">
-                    <span class="badge me-1" :class="bgStyle">{{ status }}</span>
+                    <span class="badge me-1" :class="bgStyle">{{ containerState }}</span>
 
                     <a v-for="port in envsubstService.ports" :key="port" :href="parsePort(port).url" target="_blank">
                         <span class="badge me-1 bg-secondary">{{ parsePort(port).display }}</span>
@@ -15,11 +15,16 @@
                 </div>
             </div>
             <div class="col-5">
-                <div class="function">
-                    <router-link v-if="!isEditMode" class="btn btn-normal" :to="terminalRouteLink" disabled="">
-                        <font-awesome-icon icon="terminal" />
-                        Bash
-                    </router-link>
+                <div class="d-flex align-items-center flex-column h-100">
+                    <div>
+                        <span class="fa-sm"> {{ cpuPercent }} {{ memoryUsage }}</span>
+                    </div>
+                    <div class="function">
+                        <router-link v-if="!isEditMode" class="btn btn-normal" :to="terminalRouteLink" disabled="">
+                            <font-awesome-icon icon="terminal" />
+                            Bash
+                        </router-link>
+                    </div>
                 </div>
             </div>
         </div>
@@ -157,8 +162,16 @@ export default defineComponent({
             default: false,
         },
         status: {
+            type: Object,
+            default: null
+        },
+        container: {
             type: String,
-            default: "N/A",
+            default: ""
+        },
+        stats: {
+            type: Object,
+            default: null
         }
     },
     emits: [
@@ -179,13 +192,32 @@ export default defineComponent({
         },
 
         bgStyle() {
-            if (this.status === "running" || this.status === "healthy") {
-                return "bg-primary";
-            } else if (this.status === "unhealthy") {
-                return "bg-danger";
+            if (this.status) {
+                if (this.status.state === "running" || this.status.state === "healthy") {
+                    return "bg-primary";
+                } else if (this.status.state === "unhealthy") {
+                    return "bg-danger";
+                } else {
+                    return "bg-secondary";
+                }
             } else {
                 return "bg-secondary";
             }
+        },
+        containerState() {
+            if (this.status) {
+                return this.status.state;
+            } else {
+                return "unknown";
+            }
+        },
+
+        cpuPercent() {
+            return this.$root.containerStatsList[this.container]?.cpuPercent || "";
+        },
+
+        memoryUsage() {
+            return this.$root.containerStatsList[this.container]?.memoryUsage || "";
         },
 
         terminalRouteLink() {

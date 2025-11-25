@@ -129,6 +129,7 @@
                             :is-edit-mode="isEditMode"
                             :first="name === Object.keys(jsonConfig.services)[0]"
                             :status="serviceStatusList[name]"
+                            :container="getContainer(name)"
                         />
                     </div>
 
@@ -241,6 +242,7 @@
 
             <!-- Fullscreen Terminal Modal -->
             <BModal
+                v-if="showFullscreenTerminal"
                 v-model="showFullscreenTerminal"
                 :title="$t('terminal') + ' - ' + stack.name"
                 size="xl"
@@ -248,7 +250,6 @@
                 body-class="fullscreen-terminal-body"
                 header-class="fullscreen-terminal-header"
                 :hide-footer="true"
-                @shown="onFullscreenTerminalShown"
                 @hidden="onFullscreenTerminalHidden"
             >
                 <div class="fullscreen-terminal-container">
@@ -509,13 +510,11 @@ export default {
             this.stack.name = this.$route.params.stackName;
             this.loadStack();
         }
-
         this.requestServiceStatus();
         this.calculateFullscreenTerminalSize();
-        window.addEventListener("resize", this.calculateFullscreenTerminalSize);
+        this.composeStats();
     },
     unmounted() {
-        window.removeEventListener("resize", this.calculateFullscreenTerminalSize);
     },
     methods: {
         startServiceStatusTimeout() {
@@ -523,6 +522,19 @@ export default {
             serviceStatusTimeout = setTimeout(async () => {
                 this.requestServiceStatus();
             }, 5000);
+        },
+
+        composeStats() {
+            setTimeout(async () => {
+                if (this.isAdd) {
+                    return;
+                }
+                this.$root.emitAgent(this.endpoint, "composeStats", this.stack.name);
+            }, 0);
+        },
+
+        getContainer(name) {
+            return this.serviceStatusList[name]?.id || null;
         },
 
         requestServiceStatus() {
@@ -827,16 +839,9 @@ export default {
         },
 
         fullscreen() {
+            this.calculateFullscreenTerminalSize();
             this.showFullscreenTerminal = true;
-            this.calculateFullscreenTerminalSize();
             this.$refs.fullscreenTerminal?.bind(this.endpoint, this.combinedTerminalName);
-        },
-
-        onFullscreenTerminalShown() {
-            this.calculateFullscreenTerminalSize();
-            requestAnimationFrame(() => {
-                this.$refs.fullscreenTerminal?.terminal.resize(this.fullscreenTerminalCols, this.fullscreenTerminalRows);
-            });
         },
 
         calculateFullscreenTerminalSize() {

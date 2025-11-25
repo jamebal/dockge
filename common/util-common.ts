@@ -197,6 +197,10 @@ export function getCryptoRandomInt(min: number, max: number):number {
     }
 }
 
+export function getComposeStatsName(endpoint : string, stack : string) {
+    return "compose-stats-" + endpoint + "-" + stack;
+}
+
 export function getComposeTerminalName(endpoint : string, stack : string) {
     return "compose-" + endpoint + "-" + stack;
 }

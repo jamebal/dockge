@@ -10,15 +10,21 @@ import {
     COMBINED_TERMINAL_ROWS,
     CREATED_FILE,
     CREATED_STACK,
-    EXITED, getCombinedTerminalName,
+    EXITED, getCombinedTerminalName, getComposeStatsName,
     getComposeTerminalName, getContainerExecTerminalName,
-    PROGRESS_TERMINAL_ROWS,
     RUNNING, TERMINAL_ROWS,
-    UNKNOWN
+    UNKNOWN,
 } from "../common/util-common";
 import { InteractiveTerminal, Terminal } from "./terminal";
 import childProcessAsync from "promisify-child-process";
 import { Settings } from "./settings";
+import { StatsRunner } from "./stats-runner";
+
+interface DockerPsRaw {
+    id: string;
+    state: string;
+    service: string;
+}
 
 export class Stack {
 
@@ -474,11 +480,26 @@ export class Stack {
         terminal.start();
     }
 
+    async joinComposeStats(socket: DockgeSocket) {
+        const statsName = getComposeStatsName(socket.endpoint, this.name);
+        const runner = StatsRunner.getOrCreateStatsRunner(this.server, statsName, this.path);
+        runner.join(socket);
+        runner.start();
+    }
+
     async leaveCombinedTerminal(socket: DockgeSocket) {
         const terminalName = getCombinedTerminalName(socket.endpoint, this.name);
         const terminal = Terminal.getTerminal(terminalName);
         if (terminal) {
             terminal.leave(socket);
+        }
+    }
+
+    async leaveComposeStats(socket: DockgeSocket) {
+        const statsName = getComposeStatsName(socket.endpoint, this.name);
+        const runner = StatsRunner.getStatsRunner(statsName);
+        if (runner) {
+            runner.leave(socket);
         }
     }
 
@@ -497,7 +518,7 @@ export class Stack {
     }
 
     async getServiceStatusList() {
-        let statusList = new Map<string, number>();
+        let statusList = new Map<string, DockerPsRaw>();
 
         try {
             let res = await childProcessAsync.spawn("docker", [ "compose", "ps", "--format", "json" ], {
@@ -515,9 +536,17 @@ export class Stack {
                 try {
                     let obj = JSON.parse(line);
                     if (obj.Health === "") {
-                        statusList.set(obj.Service, obj.State);
+                        statusList.set(obj.Service, {
+                            id: obj.ID,
+                            state: obj.State,
+                            service: obj.Service,
+                        });
                     } else {
-                        statusList.set(obj.Service, obj.Health);
+                        statusList.set(obj.Service, {
+                            id: obj.ID,
+                            state: obj.Health,
+                            service: obj.Service,
+                        });
                     }
                 } catch (e) {
                 }

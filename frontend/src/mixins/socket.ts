@@ -41,6 +41,9 @@ export default defineComponent({
 
             },
 
+            containerStatsList: {
+            },
+
             // Agent List
             agentList: {
 
@@ -220,6 +223,14 @@ export default defineComponent({
 
             socket.on("info", (info) => {
                 this.info = info;
+            });
+
+            agentSocket.on("composeStats", (res, statsList) => {
+                const map = {};
+                for (const stats of statsList) {
+                    map[stats.id] = stats;
+                }
+                this.containerStatsList = map;
             });
 
             socket.on("autoLogin", () => {
