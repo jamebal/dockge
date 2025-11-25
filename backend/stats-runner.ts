@@ -157,7 +157,6 @@ export class StatsRunner {
             // this.emitStats(statsList);
             for (const socketID in this.socketList) {
                 const socket = this.socketList[socketID];
-                log.debug("Socket", socket.id);
                 socket.emitAgent("composeStats", this.name, statsList);
             }
         }
