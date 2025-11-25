@@ -41,7 +41,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Generate tags
         id: tags
@@ -72,7 +72,7 @@ jobs:
           file: docker/Dockerfile
           platforms: ${{ inputs.platforms || 'linux/amd64,linux/arm64,linux/arm/v7' }}
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/dockge:latest
+          tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/dockge:latest
           cache-to: type=inline
           target: release
@@ -119,7 +119,7 @@ jobs:
         uses: peter-evans/dockerhub-description@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
           repository: ${{ secrets.DOCKER_USERNAME }}/dockge
           short-description: "Dockge - A fancy, easy-to-use and reactive docker compose.yaml manager"
           readme-filepath: ./README.md
