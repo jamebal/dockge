@@ -2,7 +2,10 @@
     <div class="shadow-box big-padding mb-3 container">
         <div class="row">
             <div class="col-7">
-                <h4>{{ name }}</h4>
+                <div class="d-flex align-items-center gap-3">
+                    <h4> {{ name }} </h4>
+                    <span class="fa-secondary mb-1"> {{ cpuPercent }} </span>
+                </div>
                 <div class="image mb-2">
                     <span class="me-1">{{ imageName }}:</span><span class="tag">{{ imageTag }}</span>
                 </div>
@@ -17,7 +20,7 @@
             <div class="col-5">
                 <div class="d-flex align-items-center flex-column h-100">
                     <div>
-                        <span class="fa-sm"> {{ cpuPercent }} {{ memoryUsage }}</span>
+                        <span class="fa-sm"> {{ memoryUsage }}</span>
                     </div>
                     <div class="function">
                         <router-link v-if="!isEditMode" class="btn btn-normal" :to="terminalRouteLink" disabled="">
