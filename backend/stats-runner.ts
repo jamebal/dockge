@@ -177,16 +177,6 @@ export class StatsRunner {
     }
 
     /**
-     * Emit stats list to all connected sockets
-     */
-    protected emitStats(statsList: ContainerStats[]) {
-        for (const socketID in this.socketList) {
-            const socket = this.socketList[socketID];
-            socket.emitAgent("composeStats", this.name, statsList);
-        }
-    }
-
-    /**
      * Parse raw docker stats JSON to structured data
      */
     protected parseStats(raw: DockerStatsRaw): ContainerStats {

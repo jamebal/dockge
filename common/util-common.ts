@@ -209,8 +209,8 @@ export function getCombinedTerminalName(endpoint : string, stack : string) {
     return "combined-" + endpoint + "-" + stack;
 }
 
-export function getContainerTerminalName(endpoint : string, container : string) {
-    return "container-" + endpoint + "-" + container;
+export function getServiceTerminalName(endpoint: string, stack: string, service: string) {
+    return "service-" + endpoint + "-" + stack + "-" + service;
 }
 
 export function getContainerExecTerminalName(endpoint : string, stackName : string, container : string, index : number) {

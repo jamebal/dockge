@@ -238,7 +238,7 @@ export class DockerSocketHandler extends AgentSocketHandler {
             }
         });
 
-        agentSocket.on("composeStats", async (stackName : unknown, callback) => {
+        agentSocket.on("composeStats", async (stackName : unknown) => {
             try {
                 checkLogin(socket);
 
@@ -252,11 +252,8 @@ export class DockerSocketHandler extends AgentSocketHandler {
                     stack.joinComposeStats(socket);
                 }
 
-                callbackResult({
-                    ok: true,
-                }, callback);
             } catch (e) {
-                callbackError(e, callback);
+                console.error("composeStats error:", e);
             }
         });
 

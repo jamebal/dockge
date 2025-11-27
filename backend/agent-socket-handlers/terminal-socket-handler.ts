@@ -201,5 +201,46 @@ export class TerminalSocketHandler extends AgentSocketHandler {
                 );
             }
         });
+
+        // Join Service Terminal
+        agentSocket.on("joinServiceTerminal", async (stackName: unknown, serviceName: unknown) => {
+            try {
+                checkLogin(socket);
+                console.log("joinServiceTerminal", stackName, serviceName);
+                if (typeof(stackName) !== "string") {
+                    throw new ValidationError("Stack name must be a string.");
+                }
+
+                if (typeof(serviceName) !== "string") {
+                    throw new ValidationError("Service name must be a string.");
+                }
+
+                const stack = await Stack.getStack(server, stackName);
+                await stack.joinServiceTerminal(socket, serviceName);
+
+            } catch (e) {
+                console.error("joinServiceTerminal error", e);
+            }
+        });
+
+        // Leave Service Terminal
+        agentSocket.on("leaveServiceTerminal", async (stackName: unknown, serviceName: unknown) => {
+            try {
+                checkLogin(socket);
+
+                if (typeof(stackName) !== "string") {
+                    throw new ValidationError("Stack name must be a string.");
+                }
+
+                if (typeof(serviceName) !== "string") {
+                    throw new ValidationError("Service name must be a string.");
+                }
+
+                const stack = await Stack.getStack(server, stackName);
+                await stack.leaveServiceTerminal(socket, serviceName);
+            } catch (e) {
+                console.error("leaveServiceTerminal error", e);
+            }
+        });
     }
 }

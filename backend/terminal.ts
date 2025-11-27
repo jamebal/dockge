@@ -200,8 +200,18 @@ export class Terminal {
 
     close() {
         clearInterval(this.keepAliveInterval);
+        clearInterval(this.kickDisconnectedClientsInterval);
+        Terminal.terminalMap.delete(this.name);
         // Send Ctrl+C to the terminal
-        this.ptyProcess?.write("\x03");
+        if (this.ptyProcess) {
+            this.ptyProcess.write("\x03");
+
+            setTimeout(() => {
+                if (this.ptyProcess) {
+                    this.ptyProcess.kill();
+                }
+            }, 2000);
+        }
     }
 
     /**

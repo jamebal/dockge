@@ -249,19 +249,41 @@
                 modal-class="fullscreen-terminal-modal"
                 body-class="fullscreen-terminal-body"
                 header-class="fullscreen-terminal-header"
-                :hide-footer="true"
-                @hidden="onFullscreenTerminalHidden"
+                hide-footer
             >
-                <div class="fullscreen-terminal-container">
-                    <Terminal
-                        ref="fullscreenTerminal"
-                        class="fullscreen-terminal"
-                        :name="combinedTerminalName"
-                        :endpoint="endpoint"
-                        :rows="fullscreenTerminalRows"
-                        :cols="fullscreenTerminalCols"
-                    ></Terminal>
-                </div>
+                <BTabs v-model="activeServiceTab" pills>
+                    <!-- 组合日志标签 -->
+                    <BTab :title="$t('Combined Logs')" active>
+                        <div class="fullscreen-terminal-container">
+                            <Terminal
+                                ref="fullscreenTerminal"
+                                class="fullscreen-terminal"
+                                :name="combinedTerminalName"
+                                :endpoint="endpoint"
+                                :rows="fullscreenTerminalRows"
+                                :cols="fullscreenTerminalCols"
+                            ></Terminal>
+                        </div>
+                    </BTab>
+
+                    <!-- 每个服务的日志标签 -->
+                    <BTab
+                        v-for="(service, name) in jsonConfig.services"
+                        :key="name"
+                        :title="name"
+                    >
+                        <div v-if="serviceTerminals[name]" class="fullscreen-terminal-container">
+                            <Terminal
+                                :ref="`fullscreenTerminal_${name}`"
+                                class="fullscreen-terminal"
+                                :name="getServiceTerminalName(name)"
+                                :endpoint="endpoint"
+                                :rows="fullscreenTerminalRows"
+                                :cols="fullscreenTerminalCols"
+                            ></Terminal>
+                        </div>
+                    </BTab>
+                </BTabs>
             </BModal>
         </div>
     </transition>
@@ -281,11 +303,10 @@ import {
     COMBINED_TERMINAL_ROWS,
     copyYAMLComments, envsubstYAML,
     getCombinedTerminalName,
-    getComposeTerminalName,
+    getComposeTerminalName, getServiceTerminalName,
     PROGRESS_TERMINAL_ROWS,
-    RUNNING
+    RUNNING,
 } from "../../../common/util-common";
-import { BModal } from "bootstrap-vue-next";
 import NetworkInput from "../components/NetworkInput.vue";
 import dotenv from "dotenv";
 
@@ -313,7 +334,6 @@ export default {
         NetworkInput,
         FontAwesomeIcon,
         PrismEditor,
-        BModal,
     },
     beforeRouteUpdate(to, from, next) {
         this.exitConfirm(next);
@@ -345,6 +365,8 @@ export default {
             showFullscreenTerminal: false,
             fullscreenTerminalRows: 40,
             fullscreenTerminalCols: 150,
+            activeServiceTab: 0,
+            serviceTerminals: {},
         };
     },
     computed: {
@@ -472,6 +494,21 @@ export default {
 
         $route(to, from) {
 
+        },
+
+        activeServiceTab(newVal) {
+            if (newVal !== 0) {
+                const serviceName = Object.keys(this.jsonConfig.services)[newVal - 1];
+                if (serviceName && !this.serviceTerminals[serviceName]) {
+                    this.initServiceTerminal(serviceName);
+                }
+            }
+        },
+
+        showFullscreenTerminal(newVal) {
+            if (!newVal) {
+                this.onFullscreenTerminalHidden();
+            }
         }
     },
     mounted() {
@@ -841,22 +878,54 @@ export default {
         fullscreen() {
             this.calculateFullscreenTerminalSize();
             this.showFullscreenTerminal = true;
-            this.$refs.fullscreenTerminal?.bind(this.endpoint, this.combinedTerminalName);
         },
 
         calculateFullscreenTerminalSize() {
             const charWidth = 8.4;
-            const charHeight = 17;
+            const charHeight = 18;
 
             const availableWidth = window.innerWidth - 100;
-            const availableHeight = window.innerHeight - 160;
+            const availableHeight = window.innerHeight - 123;
 
             this.fullscreenTerminalCols = Math.floor(availableWidth / charWidth);
             this.fullscreenTerminalRows = Math.floor(availableHeight / charHeight);
+            console.log("Calculated fullscreen terminal size:", this.fullscreenTerminalCols, this.fullscreenTerminalRows, charHeight * this.fullscreenTerminalRows, window.innerHeight);
         },
 
         onFullscreenTerminalHidden() {
             this.showFullscreenTerminal = false;
+            this.leaveFullscreenTerminal();
+        },
+
+        getServiceTerminalName(serviceName) {
+            return getServiceTerminalName(this.endpoint, this.stack.name, serviceName);
+        },
+
+        async initServiceTerminal(serviceName) {
+            const terminalName = this.getServiceTerminalName(serviceName);
+
+            if (!terminalName) {
+                console.error("initServiceTerminal: terminalName is empty");
+                return;
+            }
+
+            this.serviceTerminals[serviceName] = true;
+
+            await this.$root.emitAgent(this.endpoint, "joinServiceTerminal", this.stack.name, serviceName);
+
+            setTimeout(() => {
+                const terminalRef = this.$refs[`fullscreenTerminal_${serviceName}`];
+                terminalRef[0]?.bind(this.endpoint, terminalName);
+            }, 3000);
+
+        },
+
+        async leaveFullscreenTerminal() {
+            for (const serviceName of Object.keys(this.serviceTerminals)) {
+                await this.$root.emitAgent(this.endpoint, "leaveServiceTerminal", this.stack.name, serviceName);
+            }
+            this.serviceTerminals = {};
+            this.activeServiceTab = 0;
         },
 
     }
